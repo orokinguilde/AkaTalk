@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "heroku-prebuild": "sudo mkdir /var/lib/apt/lists/partial && apt-get update && apt-get install ffmpeg"
+    "heroku-prebuild": "mkdir /var/lib/apt/lists/partial && apt-get update && apt-get install ffmpeg"
   },
   "author": "",
   "license": "ISC",
