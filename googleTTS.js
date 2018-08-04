@@ -23,7 +23,7 @@ function tts(message, language, frequency) {
         }
     }
 
-    return googleTTS(message, language, speed)
+    return googleTTS(message, language, 2)
         .then(function(url) {
             return request
                 .get(url)
