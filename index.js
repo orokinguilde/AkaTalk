@@ -73,6 +73,17 @@ AkaTalkBot.prototype.frequency = function(pourcentage) {
 };
 
 /**
+ * @param {string} muted 
+ * @return {string}
+ */
+AkaTalkBot.prototype.mute = function(muted) {
+    if(muted !== undefined)
+        this.options.muted = muted;
+    
+    return this.options.muted;
+};
+
+/**
  * @param {Discord.VoiceChannel} voiceChannel 
  * @returns {Discord.VoiceChannel}
  */
@@ -299,14 +310,31 @@ AkaTalkBot.prototype.initialize = function() {
             this.followedUser(null);
             message.reply(`Stop following my sweet master ${message.author.username}`);
         })
+        
+        // !mute
+        exec(/^\s*!mute\s*$/, () => {
+            this.log('MUTE');
+            this.mute(true);
+            message.reply(`Muted myself`);
+        })
+        
+        // !unmute
+        exec(/^\s*!unmute\s*$/, () => {
+            this.log('UNMUTE');
+            this.mute(false);
+            message.reply(`Ready to speak!`);
+        })
 
-        if(this.currentVoiceChannel())
+        if(!this.mute() && this.currentVoiceChannel())
         {
             const followedUser = this.followedUser();
 
             if(message.author.id === followedUser.id)
             {
                 exec(/^\s*([a-zA-Z0-9].+)\s*$/, (text) => {
+                    if(text.indexOf('@'))
+                        return;
+                    
                     this.log('SAYING', text);
                     this.talk(text);
                 });
