@@ -9,7 +9,7 @@ function tts(message, language, frequency) {
     {
         try
         {
-            speed = parseInt(frequencyMatch[2]) / 100;
+            speed = 1 + parseInt(frequencyMatch[2]) / 100;
             if(frequencyMatch[1] === '-')
             {
                 speed = 1 - speed;
