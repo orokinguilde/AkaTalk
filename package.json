@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "heroku-prebuild": "curl https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-32bit-static.tar.xz > x.tar.xz && tar -zxvf x.tar.xz"
+    "heroku-prebuild": "curl https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-32bit-static.tar.xz > x.tar.xz && xz -d x.tar.xz && tar -xf x.tar"
   },
   "author": "",
   "license": "ISC",
