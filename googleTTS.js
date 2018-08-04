@@ -5,8 +5,8 @@ function tts(message, language, frequency) {
 
     message = message.replace(/\^\^/img, '');
 
-    const frequencyMatch = /\s*(\+|-)?(\d+)%\s*/img.exec(frequency || '');
     let speed = 1;
+    const frequencyMatch = /\s*(\+|-)?(\d+)%\s*/img.exec(frequency || '');
     if(frequencyMatch)
     {
         try
@@ -23,12 +23,12 @@ function tts(message, language, frequency) {
         }
     }
 
-    return googleTTS(message, language, 2)
+    return googleTTS(message, language, speed)
         .then(function(url) {
             return request
                 .get(url)
                 .on('response', function(response) {
-                    if ( response.headers['content-length'] < 1024 ) 
+                    if(response.headers['content-length'] < 1024)
                         this.end();
                 });
         });
