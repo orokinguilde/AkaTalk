@@ -260,6 +260,28 @@ AkaTalkBot.prototype.initialize = function() {
             const frequency = this.frequency(pourcentage);
             message.reply(`Changed frequency to : ${frequency}`);
         })
+
+        // !voice <voice>
+        exec(/^\s*!voice\s+(google|watson)\s*$/, (voice) => {
+            this.log('CHANGED VOICE TO', voice);
+
+            switch(voice.toLowerCase())
+            {
+                case 'google':
+                    this.tts = googleTTS;
+                    message.reply(`Switched to Google`);
+                    break;
+
+                case 'watson':
+                    this.tts = watsonTTS;
+                    message.reply(`Switched to Watson`);
+                    break;
+
+                default:
+                    message.reply(`Voice not recognized`);
+                    break;
+            }
+        })
         
         // !follow
         exec(/^\s*!follow\s*$/, () => {
@@ -316,9 +338,8 @@ AkaTalkBot.prototype.start = function() {
     this.client.login(this.options.token);
 };
 
-console.log('ATTENTION AU TOKEN');
 const bot = new AkaTalkBot({
-    token: process.env.TOKEN || 'NDc1MDY1ODA1MzAyNjYxMTI4.DkZnlA.YSi_oeDkxbKhW4CBkBw5Jo-cvsk'
+    token: process.env.TOKEN
 });
 
 bot.start();
