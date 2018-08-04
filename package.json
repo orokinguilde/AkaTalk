@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "install": "heroku create --buildpack https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git"
   },
   "author": "",
   "license": "ISC",
