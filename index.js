@@ -123,7 +123,7 @@ AkaTalkBot.prototype.talk = function(message, callback) {
 
         destStream.on('close', () => {
             console.log('E', message);
-            setTimeout(() => {
+            //setTimeout(() => {
                 //const connection = voiceChannel.connection;
                 //this.currentVoiceChannel().join().then((connection) => {
 
@@ -145,7 +145,7 @@ AkaTalkBot.prototype.talk = function(message, callback) {
                         })
                     });
                 //})
-            }, 500);
+            //}, 500);
         });
         
         const play_padding = message.length < 20;
