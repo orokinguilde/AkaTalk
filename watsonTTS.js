@@ -101,7 +101,7 @@ function mutateText(text, frequency)
         }
         else
         {
-            const regex = new RegExp(`(?:\\s|^)${key}(?:\\s|$)`, 'mg');
+            const regex = new RegExp(`(?:\\s|^)${key}(?:\\s|$)`, 'img');
             text = text.replace(regex, ' ' + textTransformations[key] + ' ');
         }
     }
