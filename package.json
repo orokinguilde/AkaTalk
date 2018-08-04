@@ -5,13 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "install": "apt-get install ffmpeg"
+    "install": "add-apt-repository ppa:mc3man/trusty-media && sudo apt-get update && apt-get dist-upgrade && apt-get install ffmpeg"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^11.3.2",
-    "node-opus": "^0.3.0",
-    "watson-developer-cloud": "^3.7.1"
   }
 }
