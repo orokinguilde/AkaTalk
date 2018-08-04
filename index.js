@@ -332,7 +332,7 @@ AkaTalkBot.prototype.initialize = function() {
             if(message.author.id === followedUser.id)
             {
                 exec(/^\s*([a-zA-Z0-9].+)\s*$/, (text) => {
-                    if(text.indexOf('@'))
+                    if(text.indexOf('@ ') === 0)
                         return;
                     
                     this.log('SAYING', text);
