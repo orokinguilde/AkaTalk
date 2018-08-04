@@ -3,6 +3,8 @@ const request = require('request');
 
 function tts(message, language, frequency) {
 
+    message = message.replace(/\^\^/img, '');
+
     const frequencyMatch = /\s*(\+|-)?(\d+)%\s*/img.exec(frequency || '');
     let speed = 1;
     if(frequencyMatch)
@@ -12,7 +14,7 @@ function tts(message, language, frequency) {
             speed = 1 + parseInt(frequencyMatch[frequencyMatch.length - 1]) / 100;
             if(frequencyMatch.length === 3 && frequencyMatch[1] === '-')
             {
-                speed = 1 - speed;
+                speed = 1 - (speed - 1);
             }
         }
         catch(ex)
