@@ -1,16 +1,19 @@
 const TextToSpeechV1 = require('watson-developer-cloud/text-to-speech/v1');
 const Readable = require('stream').Readable;
+const fs = require('fs');
 
 const credentials = {
     url: 'https://stream.watsonplatform.net/text-to-speech/api',
-    username: '0cc74568-af4c-44c9-b062-6dc0ea226ad2',
-    password: 'ttaU7qrCF6hW'
+    username: '7f2d5595-14dc-4da3-a7f5-68f070748799',
+    password: 'RP6BkupbHzIh'
 };
 
 const textToSpeech = new TextToSpeechV1({
     username: credentials.username,
     password: credentials.password
 });
+
+const textTransformations = JSON.parse(fs.readFileSync('watsonTextTransformations.json'));
 
 const languages = {
     'en-US-1': 'Allison',
@@ -77,17 +80,42 @@ function getVoice(language)
  * 
  * Code(s) interpretée(s) :
  * * /xxx => pause de xxx ms
+ * * X => lettre seule en majuscle = faire une pause entre, pour bien lire la lettre
  * 
  * @returns {string} Texte transformé
  * @param {string} text Texte à transformer
+ * @param {string=} frequency Fréquence de la lecture
  */
-function mutateText(text)
+function mutateText(text, frequency)
 {
-    const mutatedText = text.replace(/\/(\d+)/img, '<break time="$1ms"/>');
+    const regexMatcher = /^\/(.+)\/$/;
+
+    for(const key in textTransformations)
+    {
+        const match = regexMatcher.exec(key);
+
+        if(match && match.length > 1)
+        {
+            const regex = new RegExp(match[1], 'mg');
+            text = text.replace(regex, textTransformations[key]);
+        }
+        else
+        {
+            const regex = new RegExp(`(?:\\s|^)${key}(?:\\s|$)`, 'mg');
+            text = text.replace(regex, ' ' + textTransformations[key] + ' ');
+        }
+    }
+    console.log(text);
+
+    const mutatedText = text
+        .replace(/\s+([A-Z])\s+/mg, ' /100 $1 /100 ')
+        .replace(/\/(\d+)/img, '<break time="$1ms"/>')
+        .trim();
+    console.log(mutatedText);
 
     return `
         <speak version="1.0">
-            <prosody rate="+10%">
+            <prosody rate="${frequency || '+0%'}">
                 ${mutatedText}
             </prosody>
         </speak>
@@ -100,34 +128,45 @@ function mutateText(text)
  * @param {string} message Message à lire
  * @param {string} language Langue du message
  * @param {string=} format Format audio du flux de sortie
+ * @param {string=} frequency Fréquence de la lecture
  * @returns {Promise<Readable>}
  */
-function tts(message, language, format)
+function tts(message, language, format, frequency)
 {
     const params = {
-        text: mutateText(message),
+        text: mutateText(message, frequency) || '',
         voice: getVoice(language),
         accept: format || defaultAudioFormat
     };
 
     return new Promise((resolve, reject) => {
-        textToSpeech.synthesize(params, (e, audioArray) => {
-            if(e)
-                return reject(e);
-            
-            // Correction du header pour le format audio WAV
-            if(params.accept.toLowerCase().indexOf('wav') > -1)
-                textToSpeech.repairWavHeader(audioArray);
 
-            // Transforme le tableau en stream
-            const audioStream = new Readable();
-            audioStream._read = () => {};
-            audioStream.push(audioArray);
-            audioStream.push(null);
+        if(params.text.trim().length === 0)
+        {
+            reject();
+        }
+        else
+        {
+            textToSpeech.synthesize(params, (e, audioArray) => {
+                if(e)
+                    return reject(e);
+                
+                // Correction du header pour le format audio WAV
+                if(params.accept.toLowerCase().indexOf('wav') > -1)
+                    textToSpeech.repairWavHeader(audioArray);
 
-            resolve(audioStream);
-        });
+                // Transforme le tableau en stream
+                const audioStream = new Readable();
+                audioStream._read = () => {};
+                audioStream.push(audioArray);
+                audioStream.push(null);
+
+                resolve(audioStream);
+            });
+        }
     });
 }
 
-module.exports = tts;
+module.exports = function(options) {
+    return tts(options.message, options.language, options.format, options.frequency);
+};
