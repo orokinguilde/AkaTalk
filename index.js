@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
-const tts = require('./watsonTTS');
+const watsonTTS = require('./watsonTTS');
+const googleTTS = require('./googleTTS');
 const fs = require('fs');
 
 function AkaTalkBot(options)
@@ -10,8 +11,11 @@ function AkaTalkBot(options)
         throw new Error('options.token must be specified');
     if(!options.language)
         options.language = 'fr';
+    if(!options.pourcentage)
+        options.pourcentage = '+5%';
     
     this.options = options;
+    this.tts = this.options.tts || watsonTTS;
 
     if(!options.noInitialization)
         this.initialize();
@@ -58,6 +62,17 @@ AkaTalkBot.prototype.followedUser = function(user) {
 };
 
 /**
+ * @param {string} pourcentage 
+ * @return {string}
+ */
+AkaTalkBot.prototype.frequency = function(pourcentage) {
+    if(pourcentage !== undefined)
+        this.options.pourcentage = pourcentage;
+    
+    return this.options.pourcentage;
+};
+
+/**
  * @param {Discord.VoiceChannel} voiceChannel 
  * @returns {Discord.VoiceChannel}
  */
@@ -71,7 +86,10 @@ AkaTalkBot.prototype.currentVoiceChannel = function(voiceChannel) {
             this._currentVoiceChannel.leave();
         
         if(voiceChannel)
-            voiceChannel.join();
+        {
+            voiceChannel.leave()
+            voiceChannel.join().then(connection => this._connection = connection);
+        }
         this._currentVoiceChannel = voiceChannel;
     }
     
@@ -92,21 +110,97 @@ AkaTalkBot.prototype.talk = function(message, callback) {
         return false;
     }
     
-    tts(message, this.language()).then(stream => {
+    console.log('I', message);
+    this.tts({
+        message: message,
+        language: this.language(),
+        format: undefined,
+        frequency: this.frequency()
+    }).then(stream => {
         const fileName = 'audio' + Math.random() + '.wav';
         const destStream = fs.createWriteStream(fileName);
+        console.log('O', message);
 
+        destStream.on('close', () => {
+            console.log('E', message);
+            setTimeout(() => {
+                //const connection = voiceChannel.connection;
+                //this.currentVoiceChannel().join().then((connection) => {
+
+                    const connection = this._connection;
+                    connection.playFile(fileName).on('end', () => {
+                        console.log('ED', message);
+                        process.nextTick(() => {
+                            if(callback)
+                                callback(true);
+                            
+                            setTimeout(() => {
+                                try
+                                {
+                                    fs.unlinkSync(fileName);
+                                }
+                                catch(ex)
+                                { }
+                            }, 10000);
+                        })
+                    });
+                //})
+            }, 500);
+        });
+        
+        const play_padding = message.length < 20;
+        
+        if(play_padding)
+        {
+            const b = fs.createReadStream('./padding.mp3');
+
+            stream.pipe(destStream, { end: false });
+            stream.on('error', (e) => {
+                reject(e);
+            });
+            stream.on('end', () => {
+                b.pipe(destStream);
+                b.on('error', (e) => {
+                    reject(e);
+                });
+            });
+        }
+        else
+        {
+            stream.pipe(destStream);
+            stream.on('error', (e) => {
+                reject(e);
+            });
+        }
+/*
         stream
             .pipe(destStream)
             .on('close', () => {
-                const connection = voiceChannel.connection;
-                connection.playFile(fileName).on('end', () => {
-                    if(callback)
-                        callback(true);
-                    
-                    fs.unlink(fileName);
-                });
-            });
+                console.log('E', message);
+                setTimeout(() => {
+                    //const connection = voiceChannel.connection;
+                    this.currentVoiceChannel().join().then((connection) => {
+
+                        //const connection = this._connection;
+                        connection.playFile(fileName).on('end', () => {
+                            console.log('ED', message);
+                            process.nextTick(() => {
+                                if(callback)
+                                    callback(true);
+                                
+                                setTimeout(() => {
+                                    try
+                                    {
+                                        fs.unlinkSync(fileName);
+                                    }
+                                    catch(ex)
+                                    { }
+                                }, 10000);
+                            })
+                        });
+                    })
+                }, 500);
+            });*/
     });
 
     return true;
@@ -117,6 +211,16 @@ AkaTalkBot.prototype.log = function() {
 };
 AkaTalkBot.prototype.error = function() {
     console.error.apply(arguments);
+};
+
+AkaTalkBot.prototype.findUserVoiceChannelByUser = function(message) {
+    const userVoiceChannels = message.guild.channels
+        .filter(channel => channel.constructor.name === 'VoiceChannel')
+        .filter(voiceChannel => voiceChannel.speakable && voiceChannel.joinable)
+        .filter(voiceChannel => voiceChannel.members.some(user => user.id === message.author.id))
+        .array();
+
+    return userVoiceChannels[0];
 };
 
 AkaTalkBot.prototype.initialize = function() {
@@ -144,33 +248,30 @@ AkaTalkBot.prototype.initialize = function() {
         };
 
         // !lang <language>
-        exec(/^\s*!lang2\s+([^\s]+)\s*$/, (lang) => {
+        exec(/^\s*!lang\s+([^\s]+)\s*$/, (lang) => {
             this.log('CHANGED LANG TO', lang);
             const language = this.language(lang);
             message.reply(`Changed language to : ${language}`);
         })
+
+        // !freq <pourcentage>
+        exec(/^\s*!freq\s+([\+\-]?[^\s]+)\s*$/, (pourcentage) => {
+            this.log('CHANGED LANG TO', pourcentage);
+            const frequency = this.frequency(pourcentage);
+            message.reply(`Changed frequency to : ${frequency}`);
+        })
         
         // !follow
-        exec(/^\s*!follow2\s*$/, () => {
+        exec(/^\s*!follow\s*$/, () => {
             this.log('START FOLLOW');
 
-            const userVoiceChannels = message.guild.channels
-                .filter(channel => channel.constructor.name === 'VoiceChannel')
-                .filter(voiceChannel => voiceChannel.speakable && voiceChannel.joinable)
-                .filter(voiceChannel => voiceChannel.members.some(user => user.id === message.author.id))
-                .array();
-
-            if(userVoiceChannels.length > 0)
-                this.currentVoiceChannel(userVoiceChannels[0]);
-            else
-                this.currentVoiceChannel(null);
-
+            this.currentVoiceChannel(this.findUserVoiceChannelByUser(message) || null);
             this.followedUser(message.author);
             message.reply(`Following my sweet master ${message.author.username}`);
         })
         
         // !unfollow
-        exec(/^\s*!unfollow2\s*$/, () => {
+        exec(/^\s*!unfollow\s*$/, () => {
             this.log('START UNFOLLOW');
             this.currentVoiceChannel(null);
             this.followedUser(null);
@@ -200,7 +301,6 @@ AkaTalkBot.prototype.initialize = function() {
             if(newMember.voiceChannel)
             {
                 this.currentVoiceChannel(newMember.voiceChannel);
-                newMember.voiceChannel.join();
             }
             else
             {
@@ -216,8 +316,9 @@ AkaTalkBot.prototype.start = function() {
     this.client.login(this.options.token);
 };
 
+console.log('ATTENTION AU TOKEN');
 const bot = new AkaTalkBot({
-    token: process.env.TOKEN
+    token: process.env.TOKEN || 'NDc1MDY1ODA1MzAyNjYxMTI4.DkZnlA.YSi_oeDkxbKhW4CBkBw5Jo-cvsk'
 });
 
 bot.start();
