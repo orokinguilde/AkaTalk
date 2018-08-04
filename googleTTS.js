@@ -1,9 +1,27 @@
 const googleTTS = require('google-tts-api');
 const request = require('request');
 
-function tts(message, language) {
+function tts(message, language, frequency) {
 
-    return googleTTS(message, language, 1)
+    const frequencyMatch = /\s*(+|-|)(\d+)%\s*/img.exec(frequency || '');
+    let speed = 1;
+    if(frequencyMatch)
+    {
+        try
+        {
+            speed = parseInt(frequencyMatch[2]) / 100;
+            if(frequencyMatch[1] === '-')
+            {
+                speed = 1 - speed;
+            }
+        }
+        catch(ex)
+        {
+            console.error(ex);
+        }
+    }
+
+    return googleTTS(message, language, speed)
         .then(function(url) {
             return request
                 .get(url)
@@ -15,5 +33,5 @@ function tts(message, language) {
 }
 
 module.exports = function(options) {
-    return tts(options.message, options.language);
+    return tts(options.message, options.language, options.frequency);
 };
