@@ -3,14 +3,14 @@ const request = require('request');
 
 function tts(message, language, frequency) {
 
-    const frequencyMatch = /\s*(+|-|)(\d+)%\s*/img.exec(frequency || '');
+    const frequencyMatch = /\s*(+|-)?(\d+)%\s*/img.exec(frequency || '');
     let speed = 1;
     if(frequencyMatch)
     {
         try
         {
-            speed = 1 + parseInt(frequencyMatch[2]) / 100;
-            if(frequencyMatch[1] === '-')
+            speed = 1 + parseInt(frequencyMatch[frequencyMatch.length - 1]) / 100;
+            if(frequencyMatch.length === 3 && frequencyMatch[1] === '-')
             {
                 speed = 1 - speed;
             }
