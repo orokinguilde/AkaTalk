@@ -1,7 +1,28 @@
 const googleTTS = require('google-tts-api');
 const request = require('request');
+const fs = require('fs');
 
-function tts(message, language, frequency) {
+const textTransformations = fs.readFileSync('./googleTextTransformations.json');
+
+function tts(message, language, frequency)
+{
+    const regexMatcher = /^\/(.+)\/$/;
+
+    for(const key in textTransformations)
+    {
+        const match = regexMatcher.exec(key);
+
+        if(match && match.length > 1)
+        {
+            const regex = new RegExp(match[1], 'mg');
+            text = text.replace(regex, textTransformations[key]);
+        }
+        else
+        {
+            const regex = new RegExp(`(?:\\s|^)${key}(?:\\s|$)`, 'img');
+            text = text.replace(regex, ' ' + textTransformations[key] + ' ');
+        }
+    }
 
     message = message
         .replace(/\^\^/img, '')
