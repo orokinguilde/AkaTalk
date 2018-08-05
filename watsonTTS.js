@@ -105,13 +105,11 @@ function mutateText(text, frequency)
             text = text.replace(regex, ' ' + textTransformations[key] + ' ');
         }
     }
-    console.log(text);
 
     const mutatedText = text
         .replace(/\s+([A-Z])\s+/mg, ' /100 $1 /100 ')
         .replace(/\/(\d+)/img, '<break time="$1ms"/>')
         .trim();
-    console.log(mutatedText);
 
     return `
         <speak version="1.0">
