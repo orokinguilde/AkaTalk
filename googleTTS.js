@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const textTransformations = fs.readFileSync('./googleTextTransformations.json');
 
-function tts(message, language, frequency)
+function tts(text, language, frequency)
 {
     const regexMatcher = /^\/(.+)\/$/;
 
@@ -24,7 +24,7 @@ function tts(message, language, frequency)
         }
     }
 
-    message = message
+    text = text
         .replace(/\^\^/img, '')
         .replace(/ç/img, 's');
 
@@ -46,7 +46,7 @@ function tts(message, language, frequency)
         }
     }
 
-    return googleTTS(message, language, speed)
+    return googleTTS(text, language, speed)
         .then(function(url) {
             return request
                 .get(url)
