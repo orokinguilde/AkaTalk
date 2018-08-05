@@ -357,6 +357,10 @@ AkaTalkBot.prototype.initialize = function() {
             {
                 message.reply(`Voice engine ${voice} not recognized`);
             }
+            else
+            {
+                message.reply(`Changed voice engine to ${engine.name}`);
+            }
         })
         
         // !follow
