@@ -1,15 +1,24 @@
 const Discord = require('discord.js');
+const fs = require('fs');
+
 const watsonTTS = require('./watsonTTS');
 const googleTTS = require('./googleTTS');
-const fs = require('fs');
+const talkifyTTS = require('./talkifyTTS');
+const naturalreadersTTS = require('./naturalreadersTTS');
 
 const textToSpeechManagers = {
     Google: googleTTS,
-    Watson: watsonTTS
+    Watson: watsonTTS,
+    Talkify: talkifyTTS,
+    Naturalreaders: naturalreadersTTS,
+    'Naturalreaders Marie': naturalreadersTTS.marie,
+    'Naturalreaders Alice': naturalreadersTTS.alice,
 };
 
 function AkaTalkBot(options)
 {
+    this.noSave(true);
+
     if(!options)
         throw new Error('options must be specified');
     if(!options.token)
@@ -22,12 +31,15 @@ function AkaTalkBot(options)
         options.frequency = '+5%';
     
     this.options = options;
-    this.voiceEngine(this.options.ttsName || 'google')
+
+    this.options.ttsName = this.options.ttsName || 'Google';
 
     if(!options.noInitialization)
         this.initialize();
     if(!options.autoStart)
         this.start();
+        
+    this.noSave(false);
 }
 AkaTalkBot.execIfMatching = function(regex, message, fn) {
     const match = regex.exec(message);
@@ -86,6 +98,18 @@ AkaTalkBot.prototype.frequency = function(pourcentage) {
     }
     
     return this.options.frequency;
+};
+
+AkaTalkBot.prototype.allowedTextChannel = function(textChannel) {
+    if(textChannel !== undefined)
+    {
+        this.options.textChannel = textChannel ? {
+            id: textChannel.id
+        } : undefined;
+        this.save();
+    }
+    
+    return this.options.textChannel;
 };
 
 /**
@@ -227,7 +251,16 @@ AkaTalkBot.prototype.findUserVoiceChannelByUser = function(message) {
     return this.findVoiceChannelsByUser(message.guild, message.author.id)[0];
 };
 
+AkaTalkBot.prototype.noSave = function(value) {
+    if(value !== undefined)
+        this._noSave = value;
+    return this._noSave;
+}
+
 AkaTalkBot.prototype.save = function(callback, force) {
+    if(this.noSave())
+        return;
+
     callback = callback || (() => {});
 
     if(this.options.doNotSave && !force)
@@ -242,7 +275,9 @@ AkaTalkBot.prototype.save = function(callback, force) {
         } : undefined,
         frequency: this.frequency(),
         muted: this.mute(),
-        language: this.language()
+        language: this.language(),
+        ttsName: this.options.ttsName,
+        textChannel: this.options.textChannel
     };
 
     fs.writeFile('./state.json', JSON.stringify(state), callback);
@@ -254,12 +289,26 @@ AkaTalkBot.prototype.load = function(callback) {
         if(e || !content)
             return callback(e);
         
-        const state = JSON.parse(content.toString());
+        try
+        {
+            const state = JSON.parse(content.toString());
+            console.log('Last state:', state);
 
-        this.frequency(state.frequency);
-        this.followedUser(state.user);
-        this.language(state.language);
-        this.mute(state.muted);
+            this.noSave(true);
+
+            this.frequency(state.frequency);
+            this.followedUser(state.user);
+            this.language(state.language);
+            this.mute(state.muted);
+            this.voiceEngine(state.ttsName);
+            this.allowedTextChannel(state.textChannel);
+        }
+        catch(ex)
+        {
+            console.error('Error while loading the previous state: ', ex);
+        }
+        
+        this.noSave(false);
 
         callback();
     });
@@ -292,6 +341,9 @@ AkaTalkBot.prototype.voiceEngine = function(voiceEngineName) {
                 break;
             }
         }
+
+        if(changeSuccess)
+            this.save();
     }
 
     return {
@@ -347,8 +399,23 @@ AkaTalkBot.prototype.initialize = function() {
             message.reply(`Changed frequency to : ${frequency}`);
         })
 
+        // !voices
+        exec(/^\s*!voices\s*$/, (voice) => {
+            this.log('GET VOICES');
+
+            let reply = 'voici les différentes voix :\r\n';
+            for(const name in textToSpeechManagers)
+            {
+                reply += `* ${name}\r\n`;
+            }
+            
+            message.reply(reply);
+        })
+
         // !voice <voice>
-        exec(/^\s*!voice\s+([^\s]+)\s*$/, (voice) => {
+        exec(/^\s*!voice\s+(.+)\s*$/, (voice) => {
+            voice = voice.trim();
+
             this.log('CHANGED VOICE TO', voice);
 
             const engine = this.voiceEngine(voice);
@@ -369,6 +436,7 @@ AkaTalkBot.prototype.initialize = function() {
 
             this.currentVoiceChannel(this.findUserVoiceChannelByUser(message) || null);
             this.followedUser(message.author);
+            this.allowedTextChannel(message.channel);
             message.reply(`Following my sweet master ${message.author.username}`);
         })
         
@@ -377,6 +445,7 @@ AkaTalkBot.prototype.initialize = function() {
             this.log('START UNFOLLOW');
             this.currentVoiceChannel(null);
             this.followedUser(null);
+            this.allowedTextChannel(null);
             message.reply(`Stop following my sweet master ${message.author.username}`);
         })
         
@@ -395,11 +464,13 @@ AkaTalkBot.prototype.initialize = function() {
             const frequency = this.frequency();
             const language = this.language();
             const muted = this.mute();
+            const voiceEngine = this.voiceEngine();
 
             message.reply(`Status :
  * followed user = ${followedUser ? followedUser.username : 'none'}
  * frequency = ${frequency}
  * language = ${language}
+ * voice = ${voiceEngine.name}
  * muted = ${muted ? 'yes' : 'no'}`);
         })
         
@@ -413,13 +484,11 @@ AkaTalkBot.prototype.initialize = function() {
         if(!this.mute() && this.currentVoiceChannel())
         {
             const followedUser = this.followedUser();
+            const allowedTextChannel = this.allowedTextChannel();
 
-            if(message.author.id === followedUser.id)
+            if(message.author.id === followedUser.id && allowedTextChannel && message.channel.id === allowedTextChannel.id)
             {
-                exec(/^\s*(.+)\s*$/, (text) => {
-                    if(text.indexOf('@ ') === 0)
-                        return;
-                    
+                exec(/^\s*([^@!/\\\$\^].+)\s*$/, (text) => {
                     this.log('SAYING', text);
                     this.talk(text);
                 });

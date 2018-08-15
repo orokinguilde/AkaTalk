@@ -1,4 +1,5 @@
 const TextToSpeechV1 = require('watson-developer-cloud/text-to-speech/v1');
+const ttsManager = require('./ttsManager');
 const Readable = require('stream').Readable;
 const fs = require('fs');
 
@@ -88,23 +89,7 @@ function getVoice(language)
  */
 function mutateText(text, frequency)
 {
-    const regexMatcher = /^\/(.+)\/$/;
-
-    for(const key in textTransformations)
-    {
-        const match = regexMatcher.exec(key);
-
-        if(match && match.length > 1)
-        {
-            const regex = new RegExp(match[1], 'mg');
-            text = text.replace(regex, textTransformations[key]);
-        }
-        else
-        {
-            const regex = new RegExp(`(?:\\s|^)${key}(?:\\s|$)`, 'img');
-            text = text.replace(regex, ' ' + textTransformations[key] + ' ');
-        }
-    }
+    text = ttsManager.transform(text, textTransformations);
 
     const mutatedText = text
         .replace(/\s+([A-Z])\s+/mg, ' /100 $1 /100 ')
