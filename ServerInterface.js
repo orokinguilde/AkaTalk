@@ -18,30 +18,25 @@ ServerInterface.prototype.initialize = function() {
         res.send('ok');
 
         const midnight = 1534537281957 + 1000 * ((60 - 21) + 60 * (60 - 22 + 60 * (24 - 23)));
-        //const toDateMin = midnight + 1000 * 60 * 60 * 16;
-        const toDateMin = midnight - 1000 * 60 * 60 * 1 - 1000 * 60 * 25;
+        const toDateMin = midnight + 1000 * 60 * 60 * 16;
         const toDateMax = toDateMin + 1000 * 29;
         const now = Date.now();
-        console.log(now, toDateMin, toDateMax);
 
-        if(toDateMin < now && now < toDateMax)
+        //if(toDateMin < now && now < toDateMax)
         {
             const guild = this.bot.client.guilds.filter(g => g.name === 'Orokin Guilde Académie').first();
             if(guild)
             {
                 const usr = guild.members
                     .map(m => m.user)
-                    .filter(u => u.username.indexOf('Akamelia') === 0)// || u.username.indexOf('general_shark') !== -1);
+                    .filter(u => u.username.indexOf('general_shark') !== -1)
                     [0];
-        
-                console.log(usr.username, Date.now());
+
+                console.log(usr.username);
                     /*
                 usr.createDM().then(dm => {
                     dm.send(``);
                 })*/
-
-                // 1534537131602 server
-                // 1534537158255 local
             }
         }
     });
