@@ -1,5 +1,5 @@
+const StorageFile = require('./StorageFile');
 const Discord = require('discord.js');
-const request = require('request');
 const fs = require('fs');
 
 const watsonTTS = require('./voices/watsonTTS');
@@ -41,6 +41,8 @@ function AkaTalkBot(options)
         this.start();
         
     this.noSave(false);
+
+    this.saveFile = new StorageFile(process.env.STORAGE_FILE_ID);
 }
 AkaTalkBot.execIfMatching = function(regex, message, fn) {
     const match = regex.exec(message);
@@ -289,28 +291,35 @@ AkaTalkBot.prototype.save = function(callback, force) {
         textChannel: this.options.textChannel
     };
 
-    fs.writeFile('./state.json', JSON.stringify(state), callback);
+    //fs.writeFile('./state.json', JSON.stringify(state), callback);
+    this.saveFile.setContent(JSON.stringify(state), callback);
 };
 AkaTalkBot.prototype.load = function(callback) {
     callback = callback || (() => {});
 
-    fs.readFile('./state.json', (e, content) => {
+    this.saveFile.getContent((e, content) => {
+    //fs.readFile('./state.json', (e, content) => {
         if(e || !content)
             return callback(e);
         
         try
         {
-            const state = JSON.parse(content.toString());
-            console.log('Last state:', state);
+            const value = content.toString().trim();
 
-            this.noSave(true);
+            if(value)
+            {
+                const state = JSON.parse(value);
+                console.log('Last state:', state);
 
-            this.frequency(state.frequency);
-            this.followedUser(state.user);
-            this.language(state.language);
-            this.mute(state.muted);
-            this.voiceEngine(state.ttsName);
-            this.allowedTextChannel(state.textChannel);
+                this.noSave(true);
+
+                this.frequency(state.frequency);
+                this.followedUser(state.user);
+                this.language(state.language);
+                this.mute(state.muted);
+                this.voiceEngine(state.ttsName);
+                this.allowedTextChannel(state.textChannel);
+            }
         }
         catch(ex)
         {
@@ -434,6 +443,7 @@ AkaTalkBot.prototype.initialize = function() {
 
             const engine = this.voiceEngine(voice);
             
+            message.delete();
             if(!engine.changeSuccess)
             {
                 message.reply(`Voice engine ${voice} not recognized`);

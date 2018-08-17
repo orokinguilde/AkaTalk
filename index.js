@@ -1,9 +1,12 @@
-const ServerInterface = require('./ServerInterface');
-const AkaTalkBot = require('./AkaTalkBot');
 const fs = require('fs');
 
+process.env = fs.existsSync('./env.json') ? JSON.parse(fs.readFileSync('./env.json')) : process.env;
+
+const ServerInterface = require('./ServerInterface');
+const AkaTalkBot = require('./AkaTalkBot');
+
 const bot = new AkaTalkBot({
-    token: process.env.TOKEN || fs.readFileSync('./token').toString()
+    token: process.env.TOKEN
 });
 
 const serverInterface = new ServerInterface(bot);
