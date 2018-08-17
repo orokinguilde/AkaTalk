@@ -1,5 +1,6 @@
 const bodyParser = require('body-parser');
 const express = require('express');
+const request = require('request');
 const path = require('path');
 
 function ServerInterface(bot)
@@ -12,6 +13,9 @@ ServerInterface.prototype.initialize = function() {
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(bodyParser.json());
 
+    app.get('/ping', (req, res) => {
+        res.send('ok');
+    });
     app.get('/', (req, res) => {
         res.sendFile(path.join(__dirname, 'serverInterface.html'));
     });
@@ -27,6 +31,10 @@ ServerInterface.prototype.initialize = function() {
 }
 ServerInterface.prototype.start = function(port, callback) {
     this.app.listen(port, callback);
+
+    setInterval(() => {
+        request('https://aka-talk.herokuapp.com/ping');
+    }, 30 * 1000);
 }
 
 module.exports = ServerInterface;
