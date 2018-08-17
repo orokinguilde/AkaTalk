@@ -27,6 +27,11 @@ ServerInterface.prototype.initialize = function() {
             const guild = this.bot.client.guilds.filter(g => g.name === 'Orokin Guilde Académie').first();
             if(guild)
             {
+                const usrAka = guild.members
+                    .map(m => m.user)
+                    .filter(u => u.username.indexOf('Akamelia') === 0)
+                    [0];
+
                 const usr = guild.members
                     .map(m => m.user)
                     .filter(u => u.username.indexOf('(general_shark)') !== -1)
@@ -47,6 +52,12 @@ Rho, des lapinous se sont encore cachés dans le champ de coeurs... Ils sont vra
 Je suis persuadée que tu manques beaucoup à Akamelia aujourd'hui ^^
 
 *(Si tu as envie de répondre, ne le fais pas ici, je ne délivre que les messages d'Aka moi, na! ^^)*`, { split: true });
+                    })
+                }
+                if(usrAka)
+                {
+                    usrAka.createDM().then(dm => {
+                        dm.send('Il va recevoir ton petit message, hihihi ^^');
                     })
                 }
             }
