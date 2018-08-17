@@ -7,7 +7,7 @@ function ServerInterface(bot)
 {
     this.bot = bot;
 }
-console.log(Date.now(), new Date(Date.now()).toLocaleString());
+let messageSent = false;
 ServerInterface.prototype.initialize = function() {
     const app = new express();
 
@@ -18,25 +18,32 @@ ServerInterface.prototype.initialize = function() {
         res.send('ok');
 
         const midnight = 1534537281957 + 1000 * ((60 - 21) + 60 * (60 - 22 + 60 * (24 - 23)));
-        const toDateMin = midnight + 1000 * 60 * 60 * 16;
-        const toDateMax = toDateMin + 1000 * 29;
+        //const toDateMin = midnight + 1000 * 60 * 60 * 16;
+        const toDateMin = midnight - 1000 * 60 * 58;
+        const toDateMax = toDateMin + 1000 * 60;
         const now = Date.now();
 
-        //if(toDateMin < now && now < toDateMax)
+        if(toDateMin < now && now < toDateMax && messageSent)
         {
             const guild = this.bot.client.guilds.filter(g => g.name === 'Orokin Guilde Académie').first();
             if(guild)
             {
                 const usr = guild.members
                     .map(m => m.user)
-                    .filter(u => u.username.indexOf('general_shark') !== -1)
+                    .filter(u => u.username.indexOf('Akamelia') === 0)
                     [0];
 
-                console.log(usr.username);
-                    /*
-                usr.createDM().then(dm => {
-                    dm.send(``);
-                })*/
+                if(usr && usr.username === 'Akamelia')
+                {
+                    messageSent = true;
+                    usr.createDM().then(dm => {
+                        dm.send(`C'est AkaTalk qui te parle ; Akamelia m'a programmée pour te passer un petit message accompagné de plein de bisous, aujourd'hui, à 16h de l'après midi. Si tu reçois ça à la bonne heure, c'est qu'elle a bien fait son travail! hihihi ^^
+    Voici le message : :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts:
+    Je suis persuadée que tu manques beaucoup à Akamelia aujourd'hui ^^
+
+    *Ne pas répondre ici ^^*`);
+                    })
+                }
             }
         }
     });
