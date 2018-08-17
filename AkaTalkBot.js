@@ -172,7 +172,9 @@ AkaTalkBot.prototype.talk = function(message, callback) {
         message = message
             .replace(/:[^ ]+:/img, '')
             .replace(/\^\^/img, '')
-            .replace(/:3/img, '');
+            .replace(/:3/img, '')
+            .replace(/[`'"]/img, '')
+            .replace(/([^\s]+)\s*\[([^\]]*)\]/img, '$2');
     }
     
     console.log('I', message);
