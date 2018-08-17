@@ -1,0 +1,41 @@
+<html>
+    <head></head>
+    <body>
+        <input type="text" class="input" style="width: 100%;">
+        <script>
+            function post(path, params) {
+                var http = new XMLHttpRequest();
+                var strParams = Object.keys(params).map(function(key) {
+                    return key + '=' + encodeURIComponent(params[key]);
+                }).join('&');
+
+                http.open('POST', path, true);
+
+                http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+                http.onreadystatechange = function() {
+                    if(http.readyState == 4 && http.status == 200)
+                    {
+                    }
+                }
+                http.send(strParams);
+            }
+
+            var node = document.querySelector('.input');
+            node.addEventListener('keyup', function(event) {
+                if(event.key === 'Enter')
+                {
+                    var value = node.value.toString().trim();
+                    if(value)
+                    {
+                        post('/say', {
+                            text: value
+                        });
+
+                        node.value = '';
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>

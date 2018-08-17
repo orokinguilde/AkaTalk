@@ -1,5 +1,15 @@
+const path = require('path');
+const fs = require('fs');
 
 module.exports = {
+    openTransformFile: function() {
+        const args = [ __dirname, 'voices' ];
+        for(const value of arguments)
+            args.push(value);
+
+        const filePath = path.join.apply(path, args);
+        return JSON.parse(fs.readFileSync(filePath).toString());
+    },
     transform: function(text, textTransformations)
     {
         const regexMatcher = /^\/(.+)\/$/;

@@ -1,10 +1,11 @@
 const Discord = require('discord.js');
+const request = require('request');
 const fs = require('fs');
 
-const watsonTTS = require('./watsonTTS');
-const googleTTS = require('./googleTTS');
-const talkifyTTS = require('./talkifyTTS');
-const naturalreadersTTS = require('./naturalreadersTTS');
+const watsonTTS = require('./voices/watsonTTS');
+const googleTTS = require('./voices/googleTTS');
+const talkifyTTS = require('./voices/talkifyTTS');
+const naturalreadersTTS = require('./voices/naturalreadersTTS');
 
 const textToSpeechManagers = {
     Google: googleTTS,
@@ -163,6 +164,14 @@ AkaTalkBot.prototype.talk = function(message, callback) {
             callback(false);
         return false;
     }
+
+    if(message)
+    {
+        message = message
+            .replace(/:[^ ]+:/img, '')
+            .replace(/\^\^/img, '')
+            .replace(/:3/img, '');
+    }
     
     console.log('I', message);
     const voiceEngine = this.voiceEngine();
@@ -191,7 +200,7 @@ AkaTalkBot.prototype.talk = function(message, callback) {
                     const deleteFile = () => {
                         fs.unlink(fileName, (e) => {
                             if(e)
-                            { // Essayer plus tard si la suppremier n'a pas fonctionnée
+                            { // Essayer plus tard si la suppression n'a pas fonctionné
                                 setTimeout(deleteFile, 3000);
                             }
                         });
@@ -389,6 +398,8 @@ AkaTalkBot.prototype.initialize = function() {
         exec(/^\s*!lang\s+([^\s]+)\s*$/, (lang) => {
             this.log('CHANGED LANG TO', lang);
             const language = this.language(lang);
+            
+            message.delete();
             message.reply(`Changed language to : ${language}`);
         })
 
@@ -396,6 +407,8 @@ AkaTalkBot.prototype.initialize = function() {
         exec(/^\s*!freq\s+([\+\-]?[^\s]+)\s*$/, (pourcentage) => {
             this.log('CHANGED LANG TO', pourcentage);
             const frequency = this.frequency(pourcentage);
+            
+            message.delete();
             message.reply(`Changed frequency to : ${frequency}`);
         })
 
@@ -409,6 +422,7 @@ AkaTalkBot.prototype.initialize = function() {
                 reply += `* ${name}\r\n`;
             }
             
+            message.delete();
             message.reply(reply);
         })
 
@@ -437,6 +451,8 @@ AkaTalkBot.prototype.initialize = function() {
             this.currentVoiceChannel(this.findUserVoiceChannelByUser(message) || null);
             this.followedUser(message.author);
             this.allowedTextChannel(message.channel);
+            
+            message.delete();
             message.reply(`Following my sweet master ${message.author.username}`);
         })
         
@@ -446,13 +462,31 @@ AkaTalkBot.prototype.initialize = function() {
             this.currentVoiceChannel(null);
             this.followedUser(null);
             this.allowedTextChannel(null);
+
+            message.delete();
             message.reply(`Stop following my sweet master ${message.author.username}`);
+        })
+        
+        // !talksite
+        exec(/^\s*!talksite\s*$/, () => {
+            this.log('TALK SITE');
+            
+            request({
+                url: 'https://api.ipify.org?format=json',
+                method: 'GET'
+            }, (e, res, body) => {
+                const ip = JSON.parse(body.toString()).ip;
+
+                message.reply(`http://${ip}:${process.env.PORT}`);
+            });
         })
         
         // !mute
         exec(/^\s*!mute\s*$/, () => {
             this.log('MUTE');
             this.mute(true);
+
+            message.delete();
             message.reply(`Muted myself`);
         })
         
@@ -466,6 +500,7 @@ AkaTalkBot.prototype.initialize = function() {
             const muted = this.mute();
             const voiceEngine = this.voiceEngine();
 
+            message.delete();
             message.reply(`Status :
  * followed user = ${followedUser ? followedUser.username : 'none'}
  * frequency = ${frequency}
@@ -478,6 +513,8 @@ AkaTalkBot.prototype.initialize = function() {
         exec(/^\s*!unmute\s*$/, () => {
             this.log('UNMUTE');
             this.mute(false);
+            
+            message.delete();
             message.reply(`Ready to speak!`);
         })
 
@@ -490,7 +527,13 @@ AkaTalkBot.prototype.initialize = function() {
             {
                 exec(/^\s*([^@!/\\\$\^].+)\s*$/, (text) => {
                     this.log('SAYING', text);
-                    this.talk(text);
+                    this.talk(text, (success) => {
+                        if(success)
+                        {/*
+                            const speechLeft = client.emojis.find('name', 'speech_left');
+                            message.react(speechLeft);*/
+                        }
+                    });
                 });
             }
         }
