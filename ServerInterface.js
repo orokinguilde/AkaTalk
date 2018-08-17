@@ -19,11 +19,11 @@ ServerInterface.prototype.initialize = function() {
 
         const midnight = 1534537281957 + 1000 * ((60 - 21) + 60 * (60 - 22 + 60 * (24 - 23)));
         //const toDateMin = midnight + 1000 * 60 * 60 * 16;
-        const toDateMin = midnight - 1000 * 60 * 58;
+        const toDateMin = midnight - 1000 * 60 * 53;
         const toDateMax = toDateMin + 1000 * 60;
         const now = Date.now();
 
-        if(toDateMin < now && now < toDateMax && messageSent)
+        if(toDateMin < now && now < toDateMax && !messageSent)
         {
             const guild = this.bot.client.guilds.filter(g => g.name === 'Orokin Guilde Académie').first();
             if(guild)
@@ -32,16 +32,18 @@ ServerInterface.prototype.initialize = function() {
                     .map(m => m.user)
                     .filter(u => u.username.indexOf('Akamelia') === 0)
                     [0];
+                console.log(usr.username);
 
                 if(usr && usr.username === 'Akamelia')
                 {
                     messageSent = true;
                     usr.createDM().then(dm => {
-                        dm.send(`C'est AkaTalk qui te parle ; Akamelia m'a programmée pour te passer un petit message accompagné de plein de bisous, aujourd'hui, à 16h de l'après midi. Si tu reçois ça à la bonne heure, c'est qu'elle a bien fait son travail! hihihi ^^
-    Voici le message : :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts:
-    Je suis persuadée que tu manques beaucoup à Akamelia aujourd'hui ^^
+                        /*dm.send(`C'est AkaTalk qui te parle ; Akamelia m'a programmée pour te passer un petit message accompagné de plein de bisous, aujourd'hui, à 16h de l'après midi. Si tu reçois ça à la bonne heure, c'est qu'elle a bien fait son travail! hihihi ^^
+Voici le message : :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts:
+Je suis persuadée que tu manques beaucoup à Akamelia aujourd'hui ^^
 
-    *Ne pas répondre ici ^^*`);
+*Ne pas répondre ici ^^*`);*/
+                        dm.send(`.`);
                     })
                 }
             }
