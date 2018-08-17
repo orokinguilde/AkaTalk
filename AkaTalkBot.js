@@ -470,15 +470,9 @@ AkaTalkBot.prototype.initialize = function() {
         // !talksite
         exec(/^\s*!talksite\s*$/, () => {
             this.log('TALK SITE');
-            
-            request({
-                url: 'https://api.ipify.org?format=json',
-                method: 'GET'
-            }, (e, res, body) => {
-                const ip = JSON.parse(body.toString()).ip;
 
-                message.reply(`http://${ip}:${process.env.PORT}`);
-            });
+            message.delete();
+            message.reply(`le site est à l'adresse suivante : https://aka-talk.herokuapp.com/`);
         })
         
         // !mute
