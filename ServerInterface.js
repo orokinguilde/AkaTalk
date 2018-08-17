@@ -18,8 +18,7 @@ ServerInterface.prototype.initialize = function() {
         res.send('ok');
 
         const midnight = 1534537281957 + 1000 * ((60 - 21) + 60 * (60 - 22 + 60 * (24 - 23)));
-        //const toDateMin = midnight + 1000 * 60 * 60 * 16;
-        const toDateMin = midnight - 1000 * 60 * 53;
+        const toDateMin = midnight + 1000 * 60 * 60 * 16;
         const toDateMax = toDateMin + 1000 * 60;
         const now = Date.now();
 
@@ -30,20 +29,24 @@ ServerInterface.prototype.initialize = function() {
             {
                 const usr = guild.members
                     .map(m => m.user)
-                    .filter(u => u.username.indexOf('Akamelia') === 0)
+                    .filter(u => u.username.indexOf('(general_shark)') !== -1)
                     [0];
-                console.log(usr.username);
 
-                if(usr && usr.username === 'Akamelia')
+                if(usr)
                 {
                     messageSent = true;
                     usr.createDM().then(dm => {
-                        /*dm.send(`C'est AkaTalk qui te parle ; Akamelia m'a programmée pour te passer un petit message accompagné de plein de bisous, aujourd'hui, à 16h de l'après midi. Si tu reçois ça à la bonne heure, c'est qu'elle a bien fait son travail! hihihi ^^
-Voici le message : :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts:
+                        dm.send(`C'est AkaTalk qui te parle ; Akamelia m'a programmée pour te passer un petit message accompagné de plein de bisous tout doux, aujourd'hui, à 16h de l'après midi. Si tu reçois ça à la bonne heure (en un seul exemplaire), alors elle va être super contente! hihihi ^^
+Voici le message :
+
+:hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :rabbit: :hearts: :hearts: :hearts: :hearts: :hearts:
+:hearts: :rabbit: :hearts: :hearts: :rabbit: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :rabbit:
+:hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :hearts: :rabbit: :hearts: :hearts: :hearts:
+
+Rho, des lapinous se sont encore cachés dans le champ de coeurs... Ils sont vraiment trop coquins ces lapinous! ^^
 Je suis persuadée que tu manques beaucoup à Akamelia aujourd'hui ^^
 
-*Ne pas répondre ici ^^*`);*/
-                        dm.send(`.`);
+*(Si tu as envie de répondre, ne le fais pas ici, je ne délivre que les messages d'Aka moi, na! ^^)*`, { split: true });
                     })
                 }
             }
