@@ -405,6 +405,52 @@ AkaTalkBot.prototype.initialize = function() {
             });
         };
 
+        // !emoji <emoji>
+        exec(/^\s*!emoji\s+([^\s]+)\s*$/, (emojiName) => {
+            this.log('EMOJI ', emojiName);
+            
+            const emoji = client.emojis.find('name', emojiName);
+
+            message.delete();
+
+            if(!emoji)
+            {
+                message.reply(`Emoji ${emojiName} introuvable`);
+                return;
+            }
+
+            message.channel.send(`${emoji}`);
+        })
+        
+        // !react <emoji>
+        exec(/^\s*!react\s+([^\s]+)\s*$/, (emojiName) => {
+            this.log('REACT', emojiName);
+            
+            const emoji = client.emojis.find('name', emojiName);
+
+            if(!emoji)
+            {
+                message.delete();
+                message.reply(`Emoji ${emojiName} introuvable`);
+                return;
+            }
+
+            message.channel.fetchMessages().then((messages) => {
+                let previousMessage = messages.array()[1];
+    
+                message.delete();
+    
+                if(previousMessage)
+                {
+                    previousMessage.react(emoji);
+                }
+                else
+                {
+                    message.reply(`Message précédent introuvable`);
+                }
+            })
+        })
+
         // !lang <language>
         exec(/^\s*!lang\s+([^\s]+)\s*$/, (lang) => {
             this.log('CHANGED LANG TO', lang);
