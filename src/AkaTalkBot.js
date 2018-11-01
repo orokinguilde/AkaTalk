@@ -41,7 +41,7 @@ function AkaTalkBot(options)
     
     this.options = options;
 
-    this.options.ttsName = this.options.ttsName || 'Google';
+    this.options.ttsName = this.options.ttsName || process.env.DEFAULT_VOICE || 'Google';
 
     if(!options.noInitialization)
         this.initialize();
