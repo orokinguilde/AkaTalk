@@ -1,0 +1,23 @@
+{
+  "name": "akabot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "heroku-prebuild": "curl https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-32bit-static.tar.xz > x.tar.xz && xz -d x.tar.xz && tar -xf x.tar && mv ffmpeg-4.0.2-32bit-static/* ./ && ls"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.3.2",
+    "google-tts-api": "0.0.2",
+    "node-opus": "^0.3.0",
+    "request": "^2.87.0",
+    "watson-developer-cloud": "^3.7.1",
+    "isomorphic-fetch": "^2.2.1",
+    "dropbox": "^4.0.9",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3"
+  }
+}
