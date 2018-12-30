@@ -1,3 +1,4 @@
+const CombinedStream = require('combined-stream');
 const StorageFile = require('./StorageFile');
 const Discord = require('discord.js');
 const path = require('path');
@@ -161,6 +162,8 @@ AkaTalkBot.prototype.currentVoiceChannel = function(voiceChannel) {
     return this._currentVoiceChannel;
 };
 
+AkaTalkBot.prototype.pendingTalkStreams = [];
+
 /**
  * @param {string} message 
  * @returns {boolean}
@@ -188,66 +191,134 @@ AkaTalkBot.prototype.talk = function(message, callback) {
     console.log('I', message);
     const voiceEngine = this.voiceEngine();
 
-    voiceEngine.tts({
-        message: message,
-        language: this.language(),
-        format: undefined,
-        frequency: this.frequency()
-    }).then(stream => {
-        const fileName = path.join(__dirname, '..', 'bin', `audio-${Date.now().toString()}-${Math.random()}.wav`);
-        const destStream = fs.createWriteStream(fileName);
-        console.log('O', message);
+        console.log('E', message);
 
-        destStream.on('close', () => {
-            console.log('E', message);
-
-            const connection = this._connection;
-            connection.playFile(fileName).on('end', () => {
-                console.log('ED', message);
-
-                process.nextTick(() => {
-                    if(callback)
-                        callback(true);
-
-                    const deleteFile = () => {
-                        fs.unlink(fileName, (e) => {
-                            if(e && e.code !== 'ENOENT')
-                            { // Essayer plus tard si la suppression n'a pas fonctionné
-                                setTimeout(deleteFile, 3000);
-                            }
-                        });
-                    }
+        const getStream = (callback) => {
+            voiceEngine.tts({
+                message: message,
+                language: this.language(),
+                format: undefined,
+                frequency: this.frequency()
+            }).then(stream => {
+                //const fileName = path.join(__dirname, '..', 'bin', `audio-${Date.now().toString()}-${Math.random()}.wav`);
+                //const destStream = fs.createWriteStream(fileName);
+                console.log('O', message);
+        
+        
+                //destStream.on('close', () => {
+                //});
+        
+                const play_padding = message.length < 20;
+                let finalStream;
+                
+                if(play_padding)
+                {
+                    const b = fs.createReadStream(path.join(__dirname, '..', 'assets', 'padding-2 out of 3.mp3'));
                     
-                    deleteFile();
-                })
-            });
-        });
+                    const combinedStream = CombinedStream.create();
+                    combinedStream.append(stream);
+                    combinedStream.append(b);
         
-        const play_padding = message.length < 20;
-        
-        if(play_padding)
-        {
-            const b = fs.createReadStream(path.join(__dirname, '..', 'assets', 'padding.mp3'));
+                    finalStream = combinedStream;
+                }
+                else
+                {
+                    finalStream = stream;
+                }
 
-            stream.pipe(destStream, { end: false });
-            stream.on('error', (e) => {
-                reject(e);
-            });
-            stream.on('end', () => {
-                b.pipe(destStream);
-                b.on('error', (e) => {
-                    reject(e);
-                });
+                callback(finalStream);
             });
         }
-        else
+
+        getStream((stream) => {
+
+        this.pendingTalkStreams.push({
+            stream: (callback) => {
+                callback(stream);
+            },
+            callback: callback
+        });
+
+        const runFirstStream = () => {
+            const streamInfo = this.pendingTalkStreams[0];
+
+            if(streamInfo)
+            {
+                console.log('TRY');
+                try
+                {
+                    streamInfo.stream((stream) => {
+                        try
+                        {
+                            const connection = this._connection;
+                            const dispatcher = connection.playStream(stream);
+
+                            dispatcher.once('start', () => {
+                                connection.player.streamingData.pausedTime = 0;
+                            });
+                            
+                            const bindSpeakingEvent = () => {
+                                dispatcher.once('speaking', (isSpeaking) => {
+                                    if(!isSpeaking)
+                                    {
+                                        console.log('ED', message);
+                            
+                                        process.nextTick(() => {
+        
+                                            setTimeout(() => {
+                                                this.pendingTalkStreams.shift();
+                                                runFirstStream();
+                                            }, 0);
+        
+                                            if(streamInfo.callback)
+                                                streamInfo.callback(true);
+                                        })
+                                    }
+                                    else
+                                    {
+                                        bindSpeakingEvent();
+                                    }
+                                });
+                            }
+                            
+                            bindSpeakingEvent();
+        
+                            //const dispatcher = connection.playStream(streamInfo.stream)
+                            /*
+                            connection.playFile(fileName)*/
+                        }
+                        catch(ex)
+                        {
+                            console.error(ex);
+                            this.pendingTalkStreams.shift();
+
+                            if(streamInfo.callback)
+                                streamInfo.callback(false);
+                        }
+                    })
+                    
+                }
+                catch(ex)
+                {
+                    console.error(ex);
+                    this.pendingTalkStreams.shift();
+
+                    if(streamInfo.callback)
+                        streamInfo.callback(false);
+                }
+            }
+            else
+            {
+                console.log('DONE');
+            }
+        }
+
+        if(this.pendingTalkStreams.length === 1)
         {
-            stream.pipe(destStream);
-            stream.on('error', (e) => {
-                reject(e);
-            });
+            runFirstStream();
         }
-    });
+    })
+    //});
 
     return true;
 };
@@ -462,6 +533,25 @@ AkaTalkBot.prototype.initialize = function() {
             })
         })
 
+        /*
+        // !setowner <botName> <ownerName>
+        exec(/^\s*!setowner\s+([^\s]+)\s+([^\s]+)\s*$/, (botName, ownerName) => {
+            this.log('TARGETED BOT =', botName);
+            this.log('CURRENT BOT =', client.user.username);
+
+            if(client.user.username.trim().toLowerCase() === botName.trim().toLowerCase())
+            {
+                this.log('CURRENT BOT TARGETED ; OWNER =', ownerName);
+
+                message.delete();
+                message.reply(`détenteur(se) changé(e) pour : ${ownerName}`);
+            }
+            else
+            {
+                this.log('NOT TARGETED');
+            }
+        })*/
+
         // !lang <language>
         exec(/^\s*!lang\s+([^\s]+)\s*$/, (lang) => {
             this.log('CHANGED LANG TO', lang);
@@ -580,7 +670,7 @@ AkaTalkBot.prototype.initialize = function() {
             message.delete();
             message.reply(`prêt(e) à tout dire ! :rabbit:`);
         })
-
+        
         if(!this.mute() && this.currentVoiceChannel())
         {
             const followedUser = this.followedUser();
@@ -592,14 +682,19 @@ AkaTalkBot.prototype.initialize = function() {
                     this.log('SAYING', text);
                     this.talk(text, (success) => {
                         if(success)
-                        {/*
-                            const speechLeft = client.emojis.find('name', 'speech_left');
-                            message.react(speechLeft);*/
+                        {
                         }
                     });
                 });
             }
         }
+
+        /*
+        exec(/^@@@(.+)$/, (text) => {
+            this.log('SAYING', text);
+            this.talk(text, () => {
+            });
+        })*/
     });
 
     client.on('voiceStateUpdate', (oldMember, newMember) => {
