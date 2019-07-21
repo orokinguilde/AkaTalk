@@ -220,6 +220,7 @@ AkaTalkBot.prototype.talk = function(message, callback) {
                     combinedStream.append(b);
         
                     finalStream = combinedStream;
+                    finalStream = stream;
                 }
                 else
                 {
@@ -426,9 +427,9 @@ AkaTalkBot.prototype.disconnectEverywhere = function(userId) {
 AkaTalkBot.prototype.voiceEngine = function(voiceEngineName) {
     let changeSuccess = undefined;
 
-    if(voiceEngineName !== undefined)
+    //if(voiceEngineName !== undefined)
     {
-        voiceEngineName = (voiceEngineName || 'google').toLowerCase();
+        voiceEngineName = (/*voiceEngineName || */'Watson').toLowerCase();
 
         changeSuccess = false;
         for(const key in textToSpeechManagers)

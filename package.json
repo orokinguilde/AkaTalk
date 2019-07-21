@@ -1,8 +1,8 @@
 {
-  "name": "akabot",
+  "name": "akatalk",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "heroku-prebuild": "curl https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-32bit-static.tar.xz > x.tar.xz && xz -d x.tar.xz && tar -xf x.tar && mv ffmpeg-4.0.2-32bit-static/* ./ && ls"
@@ -10,14 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.18.3",
     "combined-stream": "^1.0.7",
     "discord.js": "^11.3.2",
     "dropbox": "^4.0.9",
-    "express": "^4.16.3",
     "google-tts-api": "0.0.2",
     "isomorphic-fetch": "^2.2.1",
     "node-opus": "^0.3.0",
+    "opusscript": "0.0.6",
     "request": "^2.87.0",
     "watson-developer-cloud": "^3.7.1"
   }

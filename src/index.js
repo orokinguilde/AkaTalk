@@ -9,7 +9,7 @@ do
     for(const key in process.env)
     {
         const oldValue = process.env[key];
-        let newValue = oldValue;
+        let newValue = oldValue.toString();
         
         for(const keyToReplace in process.env)
         {
@@ -26,15 +26,10 @@ do
 
 console.log('ENV', process.env);
 
-const ServerInterface = require('./ServerInterface');
-const AkaTalkBot = require('./AkaTalkBot');
+const AkaTalkBot = require('./AkaTalkBot2');
 
 const bot = new AkaTalkBot({
     token: process.env.TOKEN
 });
-
-const serverInterface = new ServerInterface(bot);
-serverInterface.initialize();
-serverInterface.start(process.env.PORT || 8080);
 
 bot.start();

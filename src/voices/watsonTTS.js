@@ -30,7 +30,7 @@ const languages = {
     'de-DE-1': 'Dieter',
     'de-DE-2': 'Birgit',
     'de-DE': 'Birgit',
-    'fr-FR': 'Renee',
+    'fr-FR': 'ReneeV3',
     'it-IT': 'Francesca',
     'ja-JP': 'Emi',
     'pt-BR': 'Isabela'
@@ -61,7 +61,7 @@ const audioFormats = [
     'audio/webm;codecs=opus',
     'audio/webm;codecs=vorbis'
 ];
-const defaultAudioFormat = 'audio/wav';
+const defaultAudioFormat = 'audio/webm;codecs=opus';
 
 /**
  * Récupère le nom complet de la voix en fonction de la langue.
@@ -122,32 +122,15 @@ function tts(message, language, format, frequency)
         accept: format || defaultAudioFormat
     };
 
-    return new Promise((resolve, reject) => {
-
-        if(params.text.trim().length === 0)
-        {
-            reject();
-        }
-        else
-        {
-            textToSpeech.synthesize(params, (e, audioArray) => {
-                if(e)
-                    return reject(e);
-                
-                // Correction du header pour le format audio WAV
-                if(params.accept.toLowerCase().indexOf('wav') > -1)
-                    textToSpeech.repairWavHeader(audioArray);
-
-                // Transforme le tableau en stream
-                const audioStream = new Readable();
-                audioStream._read = () => {};
-                audioStream.push(audioArray);
-                audioStream.push(null);
-
-                resolve(audioStream);
-            });
-        }
-    });
+    if(params.text.trim().length === 0)
+    {
+        return null;
+    }
+    else
+    {
+        const audioStream = textToSpeech.synthesize(params);
+        return audioStream;
+    }
 }
 
 module.exports = function(options) {
