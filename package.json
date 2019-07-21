@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
+  "engines": {
+    "node": "10.15.1"
+  },
   "scripts": {
     "start": "node src/index.js",
     "heroku-prebuild": "curl https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-32bit-static.tar.xz > x.tar.xz && xz -d x.tar.xz && tar -xf x.tar && mv ffmpeg-4.0.2-32bit-static/* ./ && ls"
